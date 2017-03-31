@@ -25,15 +25,8 @@ package org.jenkinsci.plugins.cucumber.jsontestsupport;
 
 import static org.jenkinsci.plugins.cucumber.jsontestsupport.CucumberJSONParser.FLAKY_JSON_REPORT_PREFIX;
 
-import gherkin.formatter.model.Tag;
-import hudson.model.Run;
-import hudson.tasks.test.MetaTabulatedResult;
-import hudson.tasks.test.TestObject;
-import hudson.tasks.test.TestResult;
-
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +35,12 @@ import java.util.TreeMap;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
+
+import gherkin.formatter.model.Tag;
+import hudson.model.Run;
+import hudson.tasks.test.MetaTabulatedResult;
+import hudson.tasks.test.TestObject;
+import hudson.tasks.test.TestResult;
 
 /**
  * Represents all the Features from Cucumber.
@@ -135,15 +134,24 @@ public class CucumberTestResult extends MetaTabulatedResult {
 		return flakyScenarioResults;
 	}
 
-	protected void setFlakyScenarios(Collection<ScenarioResult> flakyScenarios) {
-		flakyCount = flakyScenarios.size();
-		if (flakyCount != 0) {
-			for (ScenarioResult flakyScenario : flakyScenarios) {
+	void setFlakyScenarios(Collection<ScenarioResult> flakyScenarios) {
+		for (ScenarioResult flakyScenario : flakyScenarios) {
+			if (!isFailed(flakyScenario)) {
 				flakyScenario.setFlaky();
 				flakyScenario.getParent().setParent(this);
-				this.flakyScenarioResults.add(flakyScenario);
+				flakyScenarioResults.add(flakyScenario);
 			}
 		}
+		flakyCount = flakyScenarioResults.size();
+	}
+
+	private boolean isFailed(ScenarioResult flakyScenario) {
+		for (ScenarioResult failedScenarioResult : failedScenarioResults) {
+			if (flakyScenario.getFullName().equals(failedScenarioResult.getFullName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
