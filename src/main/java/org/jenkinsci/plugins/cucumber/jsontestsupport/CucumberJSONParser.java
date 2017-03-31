@@ -45,6 +45,7 @@ import org.apache.commons.io.FileUtils;
 public class CucumberJSONParser extends DefaultTestResultParserImpl {
 
 	private static final long serialVersionUID = -296964473181541824L;
+	static final String FLAKY_JSON_REPORT_PREFIX = "flaky_";
 	private boolean ignoreBadSteps;
 
 	public CucumberJSONParser() {
@@ -66,7 +67,9 @@ public class CucumberJSONParser extends DefaultTestResultParserImpl {
 		GherkinCallback callback = new GherkinCallback(result, listener, ignoreBadSteps);
 		listener.getLogger().println("[Cucumber Tests] Parsing results.");
 		JSONParser jsonParser = new JSONParser(callback, callback);
-		
+		CucumberTestResult flakiesResult = new CucumberTestResult();
+		GherkinCallback flakyCallback = new GherkinCallback(flakiesResult, listener, ignoreBadSteps);
+		JSONParser flakiesJsonParser = new JSONParser(flakyCallback, flakyCallback);
 		try {
 			for (File f : reportFiles) {
 				String s = FileUtils.readFileToString(f, "UTF-8");
@@ -75,7 +78,11 @@ public class CucumberJSONParser extends DefaultTestResultParserImpl {
 					listener.getLogger().println("[Cucumber Tests] ignoring empty file (" + f.getName() + ")");
 				}
 				else {listener.getLogger().println("[Cucumber Tests] parsing " + f.getName());
-					jsonParser.parse(s);
+					if (!f.toString().contains(FLAKY_JSON_REPORT_PREFIX)) {
+						jsonParser.parse(s);
+					} else {
+						flakiesJsonParser.parse(s);
+					}
 				}
 			}
 		}
@@ -87,6 +94,10 @@ public class CucumberJSONParser extends DefaultTestResultParserImpl {
 			callback.close();
 		}
 		result.tally();
+		if (flakiesResult.getChildren().size() != 0) {
+			flakiesResult.tally();
+			result.setFlakyScenarios(flakiesResult.getFailedTests());
+		}
 		return result;
 	}
 

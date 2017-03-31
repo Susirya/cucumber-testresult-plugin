@@ -154,20 +154,16 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 				}
 			}
 		}
-		
+
 		action = build.getAction(CucumberTestResultAction.class);
 		
 		if (action == null) {
 			action = new CucumberTestResultAction(build, result, listener);
-			CHECKPOINT.block();
 			build.addAction(action);
-			CHECKPOINT.report();
 		}
 		else {
-			CHECKPOINT.block();
 			action.mergeResult(result, listener);
 			build.save();
-			CHECKPOINT.report();
 		}
 		// action.setHealthScaleFactor(getHealthScaleFactor()); // overwrites previous value if appending
 		
@@ -208,10 +204,6 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 		return new TestResultAggregator(build, launcher, listener);
 	}
 
-	/**
-	 * Test result tracks the diff from the previous run, hence the checkpoint.
-	 */
-	private static final CheckPoint CHECKPOINT = new CheckPoint("Cucumber result archiving");
 
 	private static final long serialVersionUID = 1L;
 

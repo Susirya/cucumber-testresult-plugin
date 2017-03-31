@@ -23,6 +23,8 @@
  */
 package org.jenkinsci.plugins.cucumber.jsontestsupport;
 
+import static org.jenkinsci.plugins.cucumber.jsontestsupport.CucumberJSONParser.FLAKY_JSON_REPORT_PREFIX;
+
 import gherkin.formatter.model.Tag;
 import hudson.model.Run;
 import hudson.tasks.test.MetaTabulatedResult;
@@ -31,6 +33,7 @@ import hudson.tasks.test.TestResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +55,28 @@ public class CucumberTestResult extends MetaTabulatedResult {
 	private static final long serialVersionUID = 3499017799686036745L;
 
 	private List<FeatureResult> featureResults = new ArrayList<FeatureResult>();
+	/**
+	 * List of 'flaky' ScenarioResults - they failed initially, but passed after rerun
+	 * They are parsed from <code>flaky_*.json</code> reports.
+	 * Those <code>flaky_*.json</code> files must be prepared in the same folder as <code>cucumber
+	 * .json</code> before parsing it.
+	 */
+	private List<ScenarioResult> flakyScenarioResults = new ArrayList<ScenarioResult>();
 
 	/**
 	 *  Map of features keyed by feature name.
 	 *  Recomputed by a call to {@link CucumberTestResult#tally()}
 	 */
 	private transient Map<String,FeatureResult> featuresById = new TreeMap<String, FeatureResult>();
-	
-	/** 
+
+	/**
 	 * List of all failed ScenarioResults.
 	 * Recomputed by a call to {@link CucumberTestResult#tally()}
 	 */
 	private transient List<ScenarioResult> failedScenarioResults = new ArrayList<ScenarioResult>();
 
-	/** 
-	 * map of Tags to Scenarios. 
+	/**
+	 * map of Tags to Scenarios.
 	 * recomputed by a call to {@link CucumberTestResult#tally()}
 	 */
 	private transient Map<String, TagResult> tagMap =  new HashMap<String, TagResult>();
@@ -78,6 +88,7 @@ public class CucumberTestResult extends MetaTabulatedResult {
 	private transient int failCount;
 	private transient int skipCount;
 	private transient float duration;
+	private transient int flakyCount;
 
 
 	public CucumberTestResult() {
@@ -117,6 +128,22 @@ public class CucumberTestResult extends MetaTabulatedResult {
 	@Exported(inline=true, visibility=9)
 	public Collection<FeatureResult> getFeatures() {
 		return featureResults;
+	}
+
+	@Exported(inline=true, visibility=9)
+	public Collection<ScenarioResult> getFlakyScenarios() {
+		return flakyScenarioResults;
+	}
+
+	protected void setFlakyScenarios(Collection<ScenarioResult> flakyScenarios) {
+		flakyCount = flakyScenarios.size();
+		if (flakyCount != 0) {
+			for (ScenarioResult flakyScenario : flakyScenarios) {
+				flakyScenario.setFlaky();
+				flakyScenario.getParent().setParent(this);
+				this.flakyScenarioResults.add(flakyScenario);
+			}
+		}
 	}
 
 	@Override
@@ -219,6 +246,9 @@ public class CucumberTestResult extends MetaTabulatedResult {
 		return duration;
 	}
 
+	public int getFlakyCount() {
+		return flakyCount;
+	}
 
 	// @Override - this is an interface method
 	public String getDisplayName() {
@@ -245,7 +275,19 @@ public class CucumberTestResult extends MetaTabulatedResult {
 		failCount = 0;
 		skipCount = 0;
 		duration = 0.0f;
-		
+		flakyCount = 0;
+
+		if(flakyScenarioResults == null) {
+			flakyScenarioResults = new ArrayList<ScenarioResult>();
+		} else {
+			for (ScenarioResult flakyScenarioResult : flakyScenarioResults) {
+				flakyScenarioResult.tally();
+				flakyScenarioResult.setFlaky();
+				flakyScenarioResult.getParent().setParent(this);
+			}
+			flakyCount = flakyScenarioResults.size();
+		}
+
 		if (featuresById == null) {
 			featuresById = new TreeMap<String, FeatureResult>();
 		}
@@ -315,6 +357,14 @@ public class CucumberTestResult extends MetaTabulatedResult {
 			TagResult result = tagMap.get(token);
 			if (result != null) {
 				return result;
+			}
+		}
+		if (token.startsWith(FLAKY_JSON_REPORT_PREFIX)) {
+			for (ScenarioResult flakyScenarioResult : flakyScenarioResults) {
+				if (token.replaceFirst(FLAKY_JSON_REPORT_PREFIX,"").equals(flakyScenarioResult.getSafeName())){
+					ScenarioResult result = flakyScenarioResult;
+					return result;
+				}
 			}
 		}
 		FeatureResult result = featuresById.get(token);

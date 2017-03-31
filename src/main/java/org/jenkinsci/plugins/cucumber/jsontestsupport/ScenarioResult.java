@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cucumber.jsontestsupport;
 
+import static org.jenkinsci.plugins.cucumber.jsontestsupport.CucumberJSONParser.FLAKY_JSON_REPORT_PREFIX;
 import hudson.model.Run;
 import hudson.tasks.junit.CaseResult.Status;
 import hudson.tasks.test.TestObject;
@@ -78,7 +79,7 @@ public class ScenarioResult extends TestResult {
 	// true if this test failed
 	private transient boolean failed;
 	private transient boolean skipped;
-	
+	private transient boolean flaky;
 	private transient float duration;
 
    /**
@@ -179,6 +180,9 @@ public class ScenarioResult extends TestResult {
 		this.parent = parent;
 	}
 
+	protected void setFlaky() {
+		this.flaky = true;
+	}
 
 	@Override
 	public TestResult findCorrespondingResult(String id) {
@@ -427,6 +431,10 @@ public class ScenarioResult extends TestResult {
 			cur = next;
 			buf.insert(0, '/');
 			buf.insert(0, cur.getSafeName());
+			if (this.flaky) {
+				buf.insert(0, FLAKY_JSON_REPORT_PREFIX);
+				next = from;
+			} else
 			next = cur.getParent();
 		}
 		if (from == next) {
