@@ -29,14 +29,13 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<!-- lowest LTS that has fixes we require. -->
-		<version>1.609.2</version>
+		<version>2.14</version>
 		<relativePath />
 	</parent>
 
 	<groupId>org.jenkins-ci.plugins</groupId>
 	<artifactId>cucumber-testresult-plugin</artifactId>
-	<version>0.9-SNAPSHOT</version>
+	<version>0.10-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
 	<name>Cucumber json test reporting.</name>
@@ -46,8 +45,8 @@
 	<inceptionYear>2013</inceptionYear>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<jenkins.version>1.651</jenkins.version>
+		<jenkins-test-harness.version>2.14</jenkins-test-harness.version>
 	</properties>
 
 	<developers>
@@ -58,10 +57,10 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://git@github.com/jenkinsci/cucumber-testresult-plugin.git</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/cucumber-testresult-plugin.git</developerConnection>
+		<connection>scm:git:ssh://git@github.com/jenkinsci/cucumber-testresult-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/cucumber-testresult-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/cucumber-testresult-plugin/</url>
-	  <tag>HEAD</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<licenses>
@@ -76,25 +75,25 @@
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>junit</artifactId>
-			<version>1.2-beta-3</version>
+			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-aggregator</artifactId>
-			<version>1.13</version>
+			<version>2.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-support</artifactId>
-			<version>1.13</version>
+			<version>2.5</version>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-step-api</artifactId>
-			<version>1.14</version>
+			<version>2.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -115,12 +114,16 @@
 			<version>11.0.1</version>
 		</dependency>
 		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>structs</artifactId>
+			<version>1.5</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.hamcrest</groupId>
 			<artifactId>hamcrest-library</artifactId>
@@ -137,12 +140,6 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.jenkins-ci.tools</groupId>
-				<artifactId>maven-hpi-plugin</artifactId>
-				<version>1.106</version>
-				<extensions>true</extensions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
@@ -161,9 +158,17 @@
 			<plugins>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-release-plugin</artifactId>
-					<!-- work around MRELEASE-875 -->
-					<version>2.5.3</version>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<configuration>
+						<skip>true</skip>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>findbugs-maven-plugin</artifactId>
+					<configuration>
+						<excludeFilterFile>${basedir}/src/build/findbugs/findbugs-exclude.xml</excludeFilterFile>
+					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>

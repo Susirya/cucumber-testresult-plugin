@@ -34,6 +34,8 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.CheckPoint;
+import hudson.model.Job;
+import hudson.model.Project;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -59,10 +61,14 @@ import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 
 import org.apache.tools.ant.types.FileSet;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
@@ -101,6 +107,7 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 	}
 
     @Override
+    @SuppressFBWarnings(value={"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"}, justification="whatever")
     public boolean
     perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws InterruptedException,
             IOException {
@@ -113,7 +120,7 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 		publishReport(run, filePath, launcher, taskListener);
 	}
 
-
+	@SuppressFBWarnings(value={"RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"}, justification="move to java.nio for file stuff")
 	public boolean
 	      publishReport(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException,
 	                                                                             IOException {
@@ -154,7 +161,6 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 				}
 			}
 		}
-
 
 		action = build.getAction(CucumberTestResultAction.class);
 		
@@ -197,7 +203,7 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 
 	@Override
 	public Collection<Action> getProjectActions(AbstractProject<?, ?> project) {
-		return Collections.<Action> singleton(new TestResultProjectAction(project));
+		return Collections.<Action> singleton(new TestResultProjectAction((Job)project));
 	}
 
 
@@ -230,6 +236,7 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 
 
 	@Extension
+	@Symbol("cucumber")
 	public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
 		public String getDisplayName() {
@@ -251,7 +258,10 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 		 */
 		public FormValidation doCheckTestResults(@AncestorInPath AbstractProject project,
 		                                         @QueryParameter String value) throws IOException {
-			return FilePath.validateFileMask(project.getSomeWorkspace(), value);
+			if (project != null) {
+				return FilePath.validateFileMask(project.getSomeWorkspace(), value);
+			}
+			return FormValidation.ok();
 		}
 
 
