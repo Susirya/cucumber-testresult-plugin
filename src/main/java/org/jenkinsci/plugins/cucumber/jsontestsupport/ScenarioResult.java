@@ -124,7 +124,7 @@ public class ScenarioResult extends TestResult {
 		if (safeName != null) {
 			return safeName;
 		}
-		String name = safe(scenario.getId());
+		String name = safe(scenario.getId()).replace('"', '_');
 		String parentName = parent.getSafeName() + ';';
 		
 		if (name.startsWith(parentName)) {

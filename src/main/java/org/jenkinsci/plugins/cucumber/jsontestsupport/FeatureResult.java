@@ -165,7 +165,7 @@ public class FeatureResult extends MetaTabulatedResult {
 		if (safeName != null) {
 			return safeName;
 		}
-		safeName = uniquifyName(parent.getChildren(), safe(feature.getId()));
+		safeName = uniquifyName(parent.getChildren(), safe(feature.getId()).replace('"', '_'));
 		return safeName;
 	}
 

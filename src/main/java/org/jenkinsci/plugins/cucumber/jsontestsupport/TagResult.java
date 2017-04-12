@@ -151,7 +151,7 @@ public class TagResult extends MetaTabulatedResult {
 		if (safeName != null) {
 			return safeName;
 		}
-		safeName = safe(getName());
+		safeName = safe(getName()).replace('"', '_');
 		return safeName;
 	}
 

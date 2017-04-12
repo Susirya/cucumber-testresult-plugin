@@ -166,7 +166,7 @@ public class CucumberTestResultArchiver extends Recorder implements MatrixAggreg
 		
 		if (action == null) {
 			action = new CucumberTestResultAction(build, result, listener);
-			build.addAction(action);
+			//build.addAction(action);
 		}
 		else {
 			action.mergeResult(result, listener);
